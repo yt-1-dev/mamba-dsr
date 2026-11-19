@@ -1,0 +1,53 @@
+# Dysarthric Speech Reconstruction Pipeline
+# CUDA 13.0 / Python 3.12 / Linux x86_64
+#
+#   pip install -r requirements.txt
+#
+# Everything installs in one shot. Different platform (aarch64) or Python version?
+# The two wheel URLs below are the only lines that need swapping.
+
+--extra-index-url https://download.pytorch.org/whl/cu130
+
+# PyTorch, cu130 build. Pinned to +cu130 so pip can't fall back to the PyPI cu12 wheel.
+# torchaudio has no cu130 wheel past 2.11, so 2.9.x is the stable pairing.
+torch==2.9.1+cu130
+torchaudio==2.9.1+cu130
+torchvision==0.24.1+cu130
+# TorchAudio 2.9 requires the TorchCodec release compatible with Torch 2.9.
+# Pinned to the PyPI (CPU) wheel by URL: `torchcodec==0.9` resolves to the
+# +cu130 build from the extra index above, which needs NVDEC libs from the
+# driver and fails to load on Colab. Audio decoding only needs the CPU build + FFmpeg.
+torchcodec @ https://files.pythonhosted.org/packages/17/c8/bfb74babec98aff11ab4f239b0901f39e1a93338b3438e842d864dc46935/torchcodec-0.9.1-cp312-cp312-manylinux_2_28_x86_64.whl
+
+# Mamba SSM backbone (MambaBlocks.py). Prebuilt cu13/torch2.9 wheels — no nvcc needed.
+# PyPI only ships sdists for these, which would compile against the wrong CUDA.
+https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.7.0/causal_conv1d-1.7.0+cu13torch2.9cxx11abiTRUE-cp312-cp312-linux_x86_64.whl
+https://github.com/state-spaces/mamba/releases/download/v2.3.2.post1/mamba_ssm-2.3.2.post1+cu13torch2.9cxx11abiTRUE-cp312-cp312-linux_x86_64.whl
+
+# Speaker encoder (ECAPA-TDNN) and HiFi-GAN vocoder
+speechbrain>=1.0.0
+
+# Audio I/O backend for torchaudio.load
+soundfile>=0.12.0
+# Bundled FFmpeg executable for Python tooling.
+imageio-ffmpeg>=0.6.0
+
+# Core
+numpy>=2.0.0
+matplotlib>=3.9.0
+tqdm>=4.66.0
+
+# Transitive via mamba_ssm -> transformers -> sklearn, but pinned explicitly:
+# older builds are compiled against numpy 1.x and crash under numpy 2.
+scipy>=1.14.0
+scikit-learn>=1.5.0
+
+# DTW alignment of UASpeech targets (preprocess.ipynb)
+librosa>=0.10
+
+# Dataset download (download_uaspeech.sh)
+kaggle>=1.6.0
+
+# Pinned: VoxCeleb tooling in ../voxceleb_trainer breaks on datasets 3.x
+datasets<3
+
